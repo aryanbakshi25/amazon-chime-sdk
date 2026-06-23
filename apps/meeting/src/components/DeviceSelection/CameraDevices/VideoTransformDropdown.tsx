@@ -24,7 +24,7 @@ export const VideoTransformDropdown: React.FC<Props> = ({
 }) => {
   // The selected transform is stored in AppState so the in-meeting control can
   // re-apply it after navigating from the device-setup page.
-  const { activeVideoTransformOption, setActiveVideoTransformOption } = useAppState();
+  const { videoTransformOption, setVideoTransformOption } = useAppState();
   // Both hooks are needed because this component uses both blur and replacement filters.
   const { isBackgroundBlurSupported, createBackgroundBlurDevice } =
     useBackgroundBlur();
@@ -36,8 +36,8 @@ export const VideoTransformDropdown: React.FC<Props> = ({
 
   // useEffect to listen on selected video input device if changed by other components
   useEffect(() => {
-    if (!isVideoTransformDevice(selectedDevice) && activeVideoTransformOption !== VideoTransformOptions.None) {
-      setActiveVideoTransformOption(VideoTransformOptions.None);
+    if (!isVideoTransformDevice(selectedDevice) && videoTransformOption !== VideoTransformOptions.None) {
+      setVideoTransformOption(VideoTransformOptions.None);
     }
   }, [selectedDevice]);
 
@@ -59,7 +59,7 @@ export const VideoTransformDropdown: React.FC<Props> = ({
 
   // Creates a device based on the selections (None, Blur, Replacement) and uses it as input.
   const selectTransform = async (e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedTransform = e.target.value;
+    const selectedTransform = e.target.value as VideoTransformOptions;
     let currentDevice = selectedDevice;
 
     if (isLoading || currentDevice === undefined) {
@@ -83,7 +83,7 @@ export const VideoTransformDropdown: React.FC<Props> = ({
       // Select the newly created device from the above logic as the video input device.
       await meetingManager.startVideoInputDevice(currentDevice);
       // Update the current selected transform (shared via AppState).
-      setActiveVideoTransformOption(selectedTransform);
+      setVideoTransformOption(selectedTransform);
     } catch (e) {
       console.error('Error trying to apply', selectTransform, e);
     } finally {
@@ -96,7 +96,7 @@ export const VideoTransformDropdown: React.FC<Props> = ({
       field={Select}
       options={options}
       onChange={selectTransform}
-      value={activeVideoTransformOption}
+      value={videoTransformOption}
       label={label}
     />
   );

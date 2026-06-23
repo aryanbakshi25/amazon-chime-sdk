@@ -56,11 +56,11 @@ export const VideoFiltersCpuUtilization = {
 };
 
 // Video Transform Options
-export const VideoTransformOptions = {
-  None: 'None',
-  Blur: 'Background Blur',
-  Replacement: 'Background Replacement',
-};
+export enum VideoTransformOptions {
+  None = 'None',
+  Blur = 'Background Blur',
+  Replacement = 'Background Replacement',
+}
 
 export type VideoTransformDropdownOptionType = {
   label: string;

@@ -48,7 +48,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownWithVideoTransformOptions, setDropdownWithVideoTransformOptions] = useState<ReactNode[] | null>(null);
   const videoDevices: DeviceType[] = useMemoCompare(devices, (prev: DeviceType[] | undefined, next: DeviceType[] | undefined): boolean => isEqual(prev, next));
-  const { backgroundReplacementOption, setBackgroundReplacementOption, replacementOptionsList, activeVideoTransformOption, setActiveVideoTransformOption } = useAppState();
+  const { backgroundReplacementOption, setBackgroundReplacementOption, replacementOptionsList, videoTransformOption, setVideoTransformOption } = useAppState();
 
   useEffect(() => {
     maybeResetDeviceToIntrinsic();
@@ -60,7 +60,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
   const maybeResetDeviceToIntrinsic = async () => {
     try {
       if (
-        activeVideoTransformOption === VideoTransformOptions.None &&
+        videoTransformOption === VideoTransformOptions.None &&
         isVideoTransformDevice(selectedDevice)
       ) {
         const intrinsicDevice = await selectedDevice.intrinsicDevice();
@@ -91,7 +91,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         await current.stop();
         current = intrinsicDevice;
         // Switch to background blur device if old selection was background replacement otherwise switch to default intrinsic device.
-        if (activeVideoTransformOption === VideoTransformOptions.Replacement) {
+        if (videoTransformOption === VideoTransformOptions.Replacement) {
           current = await createBackgroundBlurDevice(current) as VideoTransformDevice;
           logger.info(`Video filter was turned on - video transform device: ${JSON.stringify(current)}`);
         } else {
@@ -108,8 +108,8 @@ const VideoInputTransformControl: React.FC<Props> = ({
       }
 
       // Update the current selected transform.
-      setActiveVideoTransformOption((activeVideoTransformOption) =>
-        activeVideoTransformOption === VideoTransformOptions.Blur
+      setVideoTransformOption((videoTransformOption) =>
+        videoTransformOption === VideoTransformOptions.Blur
           ? VideoTransformOptions.None
           : VideoTransformOptions.Blur
       );
@@ -139,7 +139,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         await current.stop();
         current = intrinsicDevice;
         // Switch to background replacement device if old selection was background blur otherwise switch to default intrinsic device.
-        if (activeVideoTransformOption === VideoTransformOptions.Blur) {
+        if (videoTransformOption === VideoTransformOptions.Blur) {
           current = await createBackgroundReplacementDevice(current) as VideoTransformDevice;
           logger.info(`Video filter turned on - selecting video transform device: ${JSON.stringify(current)}`);
         } else {
@@ -156,8 +156,8 @@ const VideoInputTransformControl: React.FC<Props> = ({
       }
 
       // Update the current selected transform.
-      setActiveVideoTransformOption((activeVideoTransformOption) =>
-        activeVideoTransformOption === VideoTransformOptions.Replacement
+      setVideoTransformOption((videoTransformOption) =>
+        videoTransformOption === VideoTransformOptions.Replacement
           ? VideoTransformOptions.None
           : VideoTransformOptions.Replacement
       );
@@ -236,7 +236,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         const videoTransformOptions: ReactNode = (
           <PopOverItem
             key="backgroundBlurFilter"
-            checked={activeVideoTransformOption === VideoTransformOptions.Blur}
+            checked={videoTransformOption === VideoTransformOptions.Blur}
             disabled={isLoading}
             onClick={toggleBackgroundBlur}
           >
@@ -255,7 +255,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         const videoTransformOptions: ReactNode = (
           <PopOverItem
             key="backgroundReplacementFilter"
-            checked={activeVideoTransformOption === VideoTransformOptions.Replacement}
+            checked={videoTransformOption === VideoTransformOptions.Replacement}
             disabled={isLoading}
             onClick={toggleBackgroundReplacement}
           >
