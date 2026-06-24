@@ -47,21 +47,22 @@ const VideoInputTransformControl: React.FC<Props> = ({
   const { isBackgroundReplacementSupported, createBackgroundReplacementDevice, changeBackgroundReplacementImage, backgroundReplacementProcessor } = useBackgroundReplacement();
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownWithVideoTransformOptions, setDropdownWithVideoTransformOptions] = useState<ReactNode[] | null>(null);
-  const [activeVideoTransformOption, setActiveVideoTransformOption] = useState<string>(VideoTransformOptions.None);
   const videoDevices: DeviceType[] = useMemoCompare(devices, (prev: DeviceType[] | undefined, next: DeviceType[] | undefined): boolean => isEqual(prev, next));
-  const { backgroundReplacementOption, setBackgroundReplacementOption, replacementOptionsList } = useAppState();
+  const { backgroundReplacementOption, setBackgroundReplacementOption, replacementOptionsList, videoTransformOption, setVideoTransformOption } = useAppState();
 
   useEffect(() => {
-    resetDeviceToIntrinsic();
+    maybeResetDeviceToIntrinsic();
   }, []);
 
-  // Reset the video input to intrinsic if current video input is a transform device because this component
-  // does not know if blur or replacement was selected. This depends on how the demo is set up.
-  // TODO: use a hook in the appState to track whether blur or replacement was selected before this component mounts,
-  // or maintain the state of `activeVideoTransformOption` in `MeetingManager`.
-  const resetDeviceToIntrinsic = async () => {
+  // The selected transform (blur/replacement/none) is tracked in AppState, so if a
+  // transform was chosen on the device-setup page before this control mounted, keep
+  // it applied. Only reset to the intrinsic device when no transform was selected.
+  const maybeResetDeviceToIntrinsic = async () => {
     try {
-      if (isVideoTransformDevice(selectedDevice)) {
+      if (
+        videoTransformOption === VideoTransformOptions.None &&
+        isVideoTransformDevice(selectedDevice)
+      ) {
         const intrinsicDevice = await selectedDevice.intrinsicDevice();
         await meetingManager.selectVideoInputDevice(intrinsicDevice);
       }
@@ -90,7 +91,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         await current.stop();
         current = intrinsicDevice;
         // Switch to background blur device if old selection was background replacement otherwise switch to default intrinsic device.
-        if (activeVideoTransformOption === VideoTransformOptions.Replacement) {
+        if (videoTransformOption === VideoTransformOptions.Replacement) {
           current = await createBackgroundBlurDevice(current) as VideoTransformDevice;
           logger.info(`Video filter was turned on - video transform device: ${JSON.stringify(current)}`);
         } else {
@@ -107,8 +108,8 @@ const VideoInputTransformControl: React.FC<Props> = ({
       }
 
       // Update the current selected transform.
-      setActiveVideoTransformOption((activeVideoTransformOption) =>
-        activeVideoTransformOption === VideoTransformOptions.Blur
+      setVideoTransformOption((videoTransformOption) =>
+        videoTransformOption === VideoTransformOptions.Blur
           ? VideoTransformOptions.None
           : VideoTransformOptions.Blur
       );
@@ -138,7 +139,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         await current.stop();
         current = intrinsicDevice;
         // Switch to background replacement device if old selection was background blur otherwise switch to default intrinsic device.
-        if (activeVideoTransformOption === VideoTransformOptions.Blur) {
+        if (videoTransformOption === VideoTransformOptions.Blur) {
           current = await createBackgroundReplacementDevice(current) as VideoTransformDevice;
           logger.info(`Video filter turned on - selecting video transform device: ${JSON.stringify(current)}`);
         } else {
@@ -155,8 +156,8 @@ const VideoInputTransformControl: React.FC<Props> = ({
       }
 
       // Update the current selected transform.
-      setActiveVideoTransformOption((activeVideoTransformOption) =>
-        activeVideoTransformOption === VideoTransformOptions.Replacement
+      setVideoTransformOption((videoTransformOption) =>
+        videoTransformOption === VideoTransformOptions.Replacement
           ? VideoTransformOptions.None
           : VideoTransformOptions.Replacement
       );
@@ -235,7 +236,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         const videoTransformOptions: ReactNode = (
           <PopOverItem
             key="backgroundBlurFilter"
-            checked={activeVideoTransformOption === VideoTransformOptions.Blur}
+            checked={videoTransformOption === VideoTransformOptions.Blur}
             disabled={isLoading}
             onClick={toggleBackgroundBlur}
           >
@@ -254,7 +255,7 @@ const VideoInputTransformControl: React.FC<Props> = ({
         const videoTransformOptions: ReactNode = (
           <PopOverItem
             key="backgroundReplacementFilter"
-            checked={activeVideoTransformOption === VideoTransformOptions.Replacement}
+            checked={videoTransformOption === VideoTransformOptions.Replacement}
             disabled={isLoading}
             onClick={toggleBackgroundReplacement}
           >

@@ -7,6 +7,7 @@ import {
   MeetingMode,
   Layout,
   VideoFiltersCpuUtilization,
+  VideoTransformOptions,
   ReplacementOptions,
   ReplacementType,
   ReplacementDropdownOptionType,
@@ -38,6 +39,10 @@ interface AppStateValue {
   backgroundReplacementOption: ReplacementOptions;
   replacementOptionsList: ReplacementDropdownOptionType[];
   enableMaxContentShares: boolean;
+  /** The video transform (None/Blur/Replacement) selected before joining, so the
+   * in-meeting control can re-apply it instead of resetting to the plain device. */
+  videoTransformOption: VideoTransformOptions;
+  setVideoTransformOption: React.Dispatch<React.SetStateAction<VideoTransformOptions>>;
   toggleTheme: () => void;
   toggleVoiceFocusDesired: () => void;
   setIsVoiceFocusEnabled: (enabled: boolean) => void;
@@ -99,6 +104,9 @@ export function AppStateProvider({ children }: Props) {
     ReplacementOptions.Blue
   );
   const [enableMaxContentShares, setEnableMaxContentShares] = useState(false);
+  const [videoTransformOption, setVideoTransformOption] = useState<VideoTransformOptions>(
+    VideoTransformOptions.None
+  );
 
   const replacementOptionsList: ReplacementDropdownOptionType[] = [
     {
@@ -217,6 +225,8 @@ export function AppStateProvider({ children }: Props) {
     replacementOptionsList,
     enableMaxContentShares,
     toggleMaxContentShares,
+    videoTransformOption,
+    setVideoTransformOption,
   };
 
   return <AppStateContext.Provider value={providerValue}>{children}</AppStateContext.Provider>;
