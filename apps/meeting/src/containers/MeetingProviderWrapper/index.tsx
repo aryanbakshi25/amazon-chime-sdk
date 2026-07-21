@@ -22,7 +22,7 @@ import { VideoFiltersCpuUtilization } from '../../types';
 
 const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ children }) => {
   const { addVoiceFocus } = useVoiceFocus();
-  const { enableMaxContentShares } = useAppState();
+  const { enableMaxContentShares, persistDeviceController, isVoiceFocusDesired } = useAppState();
 
   const onDeviceReplacement = (nextDevice: string, currentDevice: AudioInputDevice) => {
     if (currentDevice instanceof VoiceFocusTransformDevice) {
@@ -34,9 +34,18 @@ const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ chi
   const meetingConfigValue = {
     onDeviceReplacement: onDeviceReplacement as any,
     ...(enableMaxContentShares ? { maxContentShares: 2 } : {}),
+    // Set up devices before joining. Web Audio must be decided up front (Voice Focus), so derive it
+    // from the user's Voice Focus choice.
+    ...(persistDeviceController ? { persistDeviceController: true, enableWebAudio: isVoiceFocusDesired } : {}),
   };
 
-  return <MeetingProvider {...meetingConfigValue}>{children}</MeetingProvider>;
+  // Key on the option so changing it recreates MeetingProvider with the setting applied. Safe because
+  // it only changes on the home page, before a meeting exists.
+  return (
+    <MeetingProvider key={`persist-${persistDeviceController}`} {...meetingConfigValue}>
+      {children}
+    </MeetingProvider>
+  );
 };
 
 const MeetingProviderWrapper: React.FC = () => {

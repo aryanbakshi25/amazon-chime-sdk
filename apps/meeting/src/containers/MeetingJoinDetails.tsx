@@ -11,7 +11,10 @@ import {
   Modal,
   ModalBody,
   ModalHeader,
+  DeviceLabels,
 } from 'amazon-chime-sdk-component-library-react';
+import { MeetingSessionConfiguration } from 'amazon-chime-sdk-js';
+import { MeetingManagerJoinOptions } from 'amazon-chime-sdk-component-library-react/lib/providers/MeetingProvider/types';
 
 import routes from '../constants/routes';
 import Card from '../components/Card';
@@ -22,12 +25,28 @@ const MeetingJoinDetails = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { meetingId, localUserName } = useAppState();
+  const { meetingId, localUserName, persistDeviceController, joinInfo, isVoiceFocusEnabled, skipDeviceSelection } =
+    useAppState();
 
   const handleJoinMeeting = async () => {
     setIsLoading(true);
 
     try {
+      // When devices were set up before joining, the meeting is not joined yet — join it here before
+      // starting.
+      if (persistDeviceController) {
+        if (!joinInfo) {
+          throw new Error('Missing meeting join information');
+        }
+        const meetingSessionConfiguration = new MeetingSessionConfiguration(joinInfo.Meeting, joinInfo.Attendee);
+        const options: MeetingManagerJoinOptions = {
+          deviceLabels: DeviceLabels.AudioAndVideo,
+          enableWebAudio: isVoiceFocusEnabled,
+          skipDeviceSelection,
+        };
+        await meetingManager.join(meetingSessionConfiguration as any, options);
+      }
+
       await meetingManager.start();
       setIsLoading(false);
       navigate(`${routes.MEETING}/${meetingId}`);

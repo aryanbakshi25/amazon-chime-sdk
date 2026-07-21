@@ -11,11 +11,13 @@ import {
 } from 'amazon-chime-sdk-component-library-react';
 
 import routes from '../constants/routes';
+import { useAppState } from '../providers/AppStateProvider';
 
 const NoMeetingRedirect: React.FC<PropsWithChildren> = ({ children }) => {
   const navigate = useNavigate();
   const dispatch = useNotificationDispatch();
   const meetingManager = useMeetingManager();
+  const { persistDeviceController } = useAppState();
 
   const payload: { severity: Severity; message: string, autoClose: boolean } = {
     severity: Severity.INFO,
@@ -24,7 +26,8 @@ const NoMeetingRedirect: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   useEffect(() => {
-    if (!meetingManager.meetingSession) {
+    // When setting up devices before joining, a missing session is expected here, so do not redirect.
+    if (!meetingManager.meetingSession && !persistDeviceController) {
       dispatch({
         type: ActionType.ADD,
         payload: payload,
