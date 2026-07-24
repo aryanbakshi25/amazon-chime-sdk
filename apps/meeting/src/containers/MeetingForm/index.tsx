@@ -148,29 +148,36 @@ const MeetingForm: React.FC = () => {
       const isVoiceFocusEnabled = isVoiceFocusDesired && isVoiceFocusSupported === true;
       setIsVoiceFocusEnabled(isVoiceFocusEnabled);
 
-      // Set up devices before joining: go to the device-setup page and defer join/start to it.
-      // Spectators have no device setup and join immediately below.
-      if (persistDeviceController && meetingMode !== MeetingMode.Spectator) {
-        setMeetingMode(MeetingMode.Attendee);
+      // Spectators have no devices, so join and start immediately without device setup.
+      if (meetingMode === MeetingMode.Spectator) {
+        const options: MeetingManagerJoinOptions = {
+          deviceLabels: DeviceLabels.None,
+          enableWebAudio: isVoiceFocusEnabled,
+          skipDeviceSelection,
+        };
+        await meetingManager.join(meetingSessionConfiguration as any, options);
+        await meetingManager.start();
+        navigate(`${routes.MEETING}/${meetingId}`);
+        setIsLoading(false);
+        return;
+      }
+
+      setMeetingMode(MeetingMode.Attendee);
+
+      // When setting up devices before joining, go to the device-setup page and defer join/start to it.
+      if (persistDeviceController) {
         navigate(routes.DEVICE);
         setIsLoading(false);
         return;
       }
 
       const options: MeetingManagerJoinOptions = {
-        deviceLabels: meetingMode === MeetingMode.Spectator ? DeviceLabels.None : DeviceLabels.AudioAndVideo,
+        deviceLabels: DeviceLabels.AudioAndVideo,
         enableWebAudio: isVoiceFocusEnabled,
         skipDeviceSelection,
       };
       await meetingManager.join(meetingSessionConfiguration as any, options);
-
-      if (meetingMode === MeetingMode.Spectator) {
-        await meetingManager.start();
-        navigate(`${routes.MEETING}/${meetingId}`);
-      } else {
-        setMeetingMode(MeetingMode.Attendee);
-        navigate(routes.DEVICE);
-      }
+      navigate(routes.DEVICE);
       setIsLoading(false);
     } catch (error) {
       updateErrorMessage((error as Error).message);

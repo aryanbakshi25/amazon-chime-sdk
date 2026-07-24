@@ -12,11 +12,12 @@ const DeviceSetup: React.FC = () => {
   const meetingManager = useMeetingManager();
   const { persistDeviceController } = useAppState();
 
-  // When set up to run before joining, enumerate and select devices here so the pickers and preview
-  // populate on this page.
+  // Prepare devices before joining so the pickers, camera preview, and mic meter populate on this
+  // page: enumerate and prompt for permission, then select and start the default devices.
   useEffect(() => {
     if (persistDeviceController) {
-      meetingManager.setupDevices(DeviceLabels.AudioAndVideo);
+      meetingManager.invokeDeviceProvider(DeviceLabels.AudioAndVideo);
+      meetingManager.listAndSelectDevices(DeviceLabels.AudioAndVideo);
     }
   }, [meetingManager, persistDeviceController]);
 

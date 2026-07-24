@@ -1,7 +1,7 @@
 // Copyright 2020-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useMemo } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { AudioInputDevice, VoiceFocusTransformDevice } from 'amazon-chime-sdk-js';
 import {
@@ -12,6 +12,7 @@ import {
   useVoiceFocus,
 } from 'amazon-chime-sdk-component-library-react';
 import { useAppState } from '../../providers/AppStateProvider';
+import ConsoleLoggingEventController from '../../utils/ConsoleLoggingEventController';
 
 import routes from '../../constants/routes';
 import { NavigationProvider } from '../../providers/NavigationProvider';
@@ -31,21 +32,19 @@ const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ chi
     return Promise.resolve(nextDevice);
   };
 
+  // Memoized so a stable instance is passed to MeetingProvider across renders.
+  const eventController = useMemo(() => new ConsoleLoggingEventController(), []);
+
   const meetingConfigValue = {
     onDeviceReplacement: onDeviceReplacement as any,
     ...(enableMaxContentShares ? { maxContentShares: 2 } : {}),
-    // Set up devices before joining. Web Audio must be decided up front (Voice Focus), so derive it
-    // from the user's Voice Focus choice.
-    ...(persistDeviceController ? { persistDeviceController: true, enableWebAudio: isVoiceFocusDesired } : {}),
+    // Web Audio is fixed at controller creation (Voice Focus), so derive it from the user's choice.
+    ...(persistDeviceController
+      ? { persistDeviceController: true, enableWebAudio: isVoiceFocusDesired, eventController }
+      : {}),
   };
 
-  // Key on the option so changing it recreates MeetingProvider with the setting applied. Safe because
-  // it only changes on the home page, before a meeting exists.
-  return (
-    <MeetingProvider key={`persist-${persistDeviceController}`} {...meetingConfigValue}>
-      {children}
-    </MeetingProvider>
-  );
+  return <MeetingProvider {...meetingConfigValue}>{children}</MeetingProvider>;
 };
 
 const MeetingProviderWrapper: React.FC = () => {
