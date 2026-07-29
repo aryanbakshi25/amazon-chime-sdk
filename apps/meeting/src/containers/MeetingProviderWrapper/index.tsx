@@ -1,9 +1,13 @@
 // Copyright 2020-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { PropsWithChildren, useEffect, useMemo } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { AudioInputDevice, VoiceFocusTransformDevice } from 'amazon-chime-sdk-js';
+import {
+  AudioInputDevice,
+  DefaultDeviceController,
+  VoiceFocusTransformDevice,
+} from 'amazon-chime-sdk-js';
 import {
   BackgroundBlurProvider,
   BackgroundReplacementProvider,
@@ -24,6 +28,7 @@ import { VideoFiltersCpuUtilization } from '../../types';
 const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ children }) => {
   const { addVoiceFocus } = useVoiceFocus();
   const { enableMaxContentShares, persistDeviceController, isVoiceFocusDesired } = useAppState();
+  const logger = useLogger();
 
   const onDeviceReplacement = (nextDevice: string, currentDevice: AudioInputDevice) => {
     if (currentDevice instanceof VoiceFocusTransformDevice) {
@@ -32,19 +37,42 @@ const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ chi
     return Promise.resolve(nextDevice);
   };
 
-  // Memoized so a stable instance is passed to MeetingProvider across renders.
-  const eventController = useMemo(() => new ConsoleLoggingEventController(), []);
+  // When opted in, the app constructs the device controller so device setup works before joining, and
+  // owns its lifecycle. Web Audio is fixed at construction (Voice Focus), so derive it from the choice.
+  const deviceController = useMemo(
+    () =>
+      persistDeviceController
+        ? new DefaultDeviceController(
+            logger,
+            { enableWebAudio: isVoiceFocusDesired },
+            undefined,
+            new ConsoleLoggingEventController()
+          )
+        : undefined,
+    [persistDeviceController, isVoiceFocusDesired, logger]
+  );
+
+  // The app created it, so the app destroys it.
+  useEffect(() => {
+    return () => {
+      void deviceController?.destroy();
+    };
+  }, [deviceController]);
 
   const meetingConfigValue = {
     onDeviceReplacement: onDeviceReplacement as any,
     ...(enableMaxContentShares ? { maxContentShares: 2 } : {}),
-    // Web Audio is fixed at controller creation (Voice Focus), so derive it from the user's choice.
-    ...(persistDeviceController
-      ? { persistDeviceController: true, enableWebAudio: isVoiceFocusDesired, eventController }
-      : {}),
+    ...(deviceController ? { deviceController } : {}),
   };
 
-  return <MeetingProvider {...meetingConfigValue}>{children}</MeetingProvider>;
+  // MeetingProvider creates its MeetingManager once, capturing the deviceController at that moment.
+  // Key it on the controller's presence so toggling device setup remounts the provider and rebuilds
+  // the manager with (or without) the controller.
+  return (
+    <MeetingProvider key={deviceController ? 'with-dc' : 'no-dc'} {...meetingConfigValue}>
+      {children}
+    </MeetingProvider>
+  );
 };
 
 const MeetingProviderWrapper: React.FC = () => {
