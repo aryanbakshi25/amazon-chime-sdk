@@ -10,16 +10,15 @@ import { useAppState } from '../../providers/AppStateProvider';
 
 const DeviceSetup: React.FC = () => {
   const meetingManager = useMeetingManager();
-  const { persistDeviceController } = useAppState();
+  const { isPreMeetingDeviceSetupAllowed } = useAppState();
 
-  // Prepare devices before joining so the pickers, camera preview, and mic meter populate on this
-  // page: enumerate and prompt for permission, then select and start the default devices.
+  // Enumerate, prompt for permission, and start default devices so the pickers populate before joining.
   useEffect(() => {
-    if (persistDeviceController) {
+    if (isPreMeetingDeviceSetupAllowed) {
       meetingManager.invokeDeviceProvider(DeviceLabels.AudioAndVideo);
       meetingManager.listAndSelectDevices(DeviceLabels.AudioAndVideo);
     }
-  }, [meetingManager, persistDeviceController]);
+  }, [meetingManager, isPreMeetingDeviceSetupAllowed]);
 
   return (
     <StyledLayout>

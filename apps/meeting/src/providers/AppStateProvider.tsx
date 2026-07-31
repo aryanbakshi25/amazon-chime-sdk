@@ -61,8 +61,8 @@ interface AppStateValue {
   setBlob: (imageBlob: Blob) => void;
   skipDeviceSelection: boolean;
   toggleMeetingJoinDeviceSelection: () => void;
-  persistDeviceController: boolean;
-  togglePersistDeviceController: () => void;
+  isPreMeetingDeviceSetupAllowed: boolean;
+  togglePreMeetingDeviceSetupAllowed: () => void;
   setBackgroundReplacementOption: React.Dispatch<React.SetStateAction<ReplacementOptions>>;
 }
 
@@ -102,7 +102,7 @@ export function AppStateProvider({ children }: Props) {
   const [videoTransformCpuUtilization, setCpuPercentage] = useState(VideoFiltersCpuUtilization.CPU40Percent);
   const [imageBlob, setImageBlob] = useState<Blob | undefined>(undefined);
   const [skipDeviceSelection, setSkipDeviceSelection] = useState(false);
-  const [persistDeviceController, setPersistDeviceController] = useState(false);
+  const [isPreMeetingDeviceSetupAllowed, setIsPreMeetingDeviceSetupAllowed] = useState(false);
   const [backgroundReplacementOption, setBackgroundReplacementOption] = useState<ReplacementOptions>(
     ReplacementOptions.Blue
   );
@@ -154,8 +154,8 @@ export function AppStateProvider({ children }: Props) {
     setSkipDeviceSelection((current) => !current);
   };
 
-  const togglePersistDeviceController = (): void => {
-    setPersistDeviceController((current) => !current);
+  const togglePreMeetingDeviceSetupAllowed = (): void => {
+    setIsPreMeetingDeviceSetupAllowed((current) => !current);
   };
 
   const toggleVoiceFocusDesired = (): void => {
@@ -227,8 +227,8 @@ export function AppStateProvider({ children }: Props) {
     setBlob,
     skipDeviceSelection,
     toggleMeetingJoinDeviceSelection,
-    persistDeviceController,
-    togglePersistDeviceController,
+    isPreMeetingDeviceSetupAllowed,
+    togglePreMeetingDeviceSetupAllowed,
     backgroundReplacementOption,
     setBackgroundReplacementOption,
     replacementOptionsList,

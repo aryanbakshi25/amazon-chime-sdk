@@ -25,20 +25,15 @@ const MeetingJoinDetails = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { meetingId, localUserName, persistDeviceController, joinInfo, isVoiceFocusEnabled, skipDeviceSelection } =
+  const { meetingId, localUserName, isPreMeetingDeviceSetupAllowed, joinInfo, isVoiceFocusEnabled, skipDeviceSelection } =
     useAppState();
 
   const handleJoinMeeting = async () => {
     setIsLoading(true);
 
     try {
-      // When devices were set up before joining, the meeting is not joined yet — join it here before
-      // starting.
-      if (persistDeviceController) {
-        if (!joinInfo) {
-          throw new Error('Missing meeting join information');
-        }
-        const meetingSessionConfiguration = new MeetingSessionConfiguration(joinInfo.Meeting, joinInfo.Attendee);
+      if (isPreMeetingDeviceSetupAllowed) {
+        const meetingSessionConfiguration = new MeetingSessionConfiguration(joinInfo!.Meeting, joinInfo!.Attendee);
         const options: MeetingManagerJoinOptions = {
           deviceLabels: DeviceLabels.AudioAndVideo,
           enableWebAudio: isVoiceFocusEnabled,

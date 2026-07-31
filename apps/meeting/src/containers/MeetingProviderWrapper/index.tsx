@@ -16,7 +16,6 @@ import {
   useVoiceFocus,
 } from 'amazon-chime-sdk-component-library-react';
 import { useAppState } from '../../providers/AppStateProvider';
-import ConsoleLoggingEventController from '../../utils/ConsoleLoggingEventController';
 
 import routes from '../../constants/routes';
 import { NavigationProvider } from '../../providers/NavigationProvider';
@@ -27,7 +26,7 @@ import { VideoFiltersCpuUtilization } from '../../types';
 
 const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ children }) => {
   const { addVoiceFocus } = useVoiceFocus();
-  const { enableMaxContentShares, persistDeviceController, isVoiceFocusDesired } = useAppState();
+  const { enableMaxContentShares, isPreMeetingDeviceSetupAllowed, isVoiceFocusDesired } = useAppState();
   const logger = useLogger();
 
   const onDeviceReplacement = (nextDevice: string, currentDevice: AudioInputDevice) => {
@@ -37,22 +36,17 @@ const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ chi
     return Promise.resolve(nextDevice);
   };
 
-  // When opted in, the app constructs the device controller so device setup works before joining, and
-  // owns its lifecycle. Web Audio is fixed at construction (Voice Focus), so derive it from the choice.
+  // Web Audio is fixed at construction, so derive it from the Voice Focus choice.
   const deviceController = useMemo(
     () =>
-      persistDeviceController
-        ? new DefaultDeviceController(
-            logger,
-            { enableWebAudio: isVoiceFocusDesired },
-            undefined,
-            new ConsoleLoggingEventController()
-          )
+      isPreMeetingDeviceSetupAllowed
+        ? new DefaultDeviceController(logger, {
+            enableWebAudio: isVoiceFocusDesired,
+          })
         : undefined,
-    [persistDeviceController, isVoiceFocusDesired, logger]
+    [isPreMeetingDeviceSetupAllowed, isVoiceFocusDesired, logger]
   );
 
-  // The app created it, so the app destroys it.
   useEffect(() => {
     return () => {
       void deviceController?.destroy();
@@ -65,9 +59,7 @@ const MeetingProviderWithDeviceReplacement: React.FC<PropsWithChildren> = ({ chi
     ...(deviceController ? { deviceController } : {}),
   };
 
-  // MeetingProvider creates its MeetingManager once, capturing the deviceController at that moment.
-  // Key it on the controller's presence so toggling device setup remounts the provider and rebuilds
-  // the manager with (or without) the controller.
+  // MeetingProvider captures the deviceController once, so key on its presence to remount on toggle.
   return (
     <MeetingProvider key={deviceController ? 'with-dc' : 'no-dc'} {...meetingConfigValue}>
       {children}

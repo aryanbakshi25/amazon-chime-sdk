@@ -17,7 +17,7 @@ const NoMeetingRedirect: React.FC<PropsWithChildren> = ({ children }) => {
   const navigate = useNavigate();
   const dispatch = useNotificationDispatch();
   const meetingManager = useMeetingManager();
-  const { persistDeviceController } = useAppState();
+  const { isPreMeetingDeviceSetupAllowed } = useAppState();
 
   const payload: { severity: Severity; message: string, autoClose: boolean } = {
     severity: Severity.INFO,
@@ -26,8 +26,7 @@ const NoMeetingRedirect: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   useEffect(() => {
-    // When setting up devices before joining, a missing session is expected here, so do not redirect.
-    if (!meetingManager.meetingSession && !persistDeviceController) {
+    if (!isPreMeetingDeviceSetupAllowed && !meetingManager.meetingSession) {
       dispatch({
         type: ActionType.ADD,
         payload: payload,

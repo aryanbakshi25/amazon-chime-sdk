@@ -70,8 +70,8 @@ const MeetingForm: React.FC = () => {
     toggleEchoReduction,
     setIsVoiceFocusEnabled,
     toggleMeetingJoinDeviceSelection,
-    persistDeviceController,
-    togglePersistDeviceController,
+    isPreMeetingDeviceSetupAllowed,
+    togglePreMeetingDeviceSetupAllowed,
   } = useAppState();
   const [meetingErr, setMeetingErr] = useState(false);
   const [nameErr, setNameErr] = useState(false);
@@ -148,7 +148,6 @@ const MeetingForm: React.FC = () => {
       const isVoiceFocusEnabled = isVoiceFocusDesired && isVoiceFocusSupported === true;
       setIsVoiceFocusEnabled(isVoiceFocusEnabled);
 
-      // Spectators have no devices, so join and start immediately without device setup.
       if (meetingMode === MeetingMode.Spectator) {
         const options: MeetingManagerJoinOptions = {
           deviceLabels: DeviceLabels.None,
@@ -164,8 +163,7 @@ const MeetingForm: React.FC = () => {
 
       setMeetingMode(MeetingMode.Attendee);
 
-      // When setting up devices before joining, go to the device-setup page and defer join/start to it.
-      if (persistDeviceController) {
+      if (isPreMeetingDeviceSetupAllowed) {
         navigate(routes.DEVICE);
         setIsLoading(false);
         return;
@@ -340,8 +338,8 @@ const MeetingForm: React.FC = () => {
         field={Checkbox}
         label="Set Up Devices Before Joining"
         value=""
-        checked={persistDeviceController}
-        onChange={togglePersistDeviceController}
+        checked={isPreMeetingDeviceSetupAllowed}
+        onChange={togglePreMeetingDeviceSetupAllowed}
         infoText="Preview and select devices on the setup page before the meeting is joined"
       />
       <FormField
