@@ -12,9 +12,9 @@ import {
   ModalBody,
   ModalHeader,
   DeviceLabels,
+  MeetingManagerJoinOptions,
 } from 'amazon-chime-sdk-component-library-react';
 import { MeetingSessionConfiguration } from 'amazon-chime-sdk-js';
-import { MeetingManagerJoinOptions } from 'amazon-chime-sdk-component-library-react/lib/providers/MeetingProvider/types';
 
 import routes from '../constants/routes';
 import Card from '../components/Card';

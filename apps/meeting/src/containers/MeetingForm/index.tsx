@@ -10,6 +10,7 @@ import {
   FormField,
   Heading,
   Input,
+  MeetingManagerJoinOptions,
   Modal,
   ModalBody,
   ModalHeader,
@@ -29,7 +30,6 @@ import RegionSelection from './RegionSelection';
 import { createGetAttendeeCallback, createMeetingAndAttendee, JoinMeetingInfo } from '../../utils/api';
 import { useAppState } from '../../providers/AppStateProvider';
 import { MeetingMode, VideoFiltersCpuUtilization } from '../../types';
-import { MeetingManagerJoinOptions } from 'amazon-chime-sdk-component-library-react/lib/providers/MeetingProvider/types';
 import meetingConfig from '../../meetingConfig';
 
 const VIDEO_TRANSFORM_FILTER_OPTIONS = [
